@@ -80,7 +80,7 @@ func NewTTFB() (*TTFB, error) {
 }
 
 func (t *TTFB) loadServers() error {
-	file, err := os.Open(config)
+	file, err := os.Open(os.Getenv("HOME") + "/" + config)
 
 	if err != nil {
 		return err
