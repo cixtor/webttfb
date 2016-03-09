@@ -19,8 +19,11 @@ func main() {
 	}
 
 	flag.Usage = func() {
-		fmt.Println("Website TTFB — Time To First Byte")
+		fmt.Println("Website TTFB")
+		fmt.Println("https://cixtor.com/")
+		fmt.Println("https://performance.sucuri.net/")
 		fmt.Println("https://github.com/cixtor/webttfb")
+		fmt.Println("https://en.wikipedia.org/wiki/Time_To_First_Byte")
 		fmt.Println()
 		fmt.Println("Time To First Byte (TTFB) is a measurement used as an indication of the")
 		fmt.Println("responsiveness of a webserver or other network resource. TTFB measures the")
