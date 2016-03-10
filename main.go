@@ -11,7 +11,7 @@ var sorting = flag.String("s", "status", "Criteria to sort the results")
 var private = flag.Bool("p", false, "Hide results from public stats")
 
 func main() {
-	tester, err := NewTTFB()
+	tester, err := NewTTFB(*domain, *private)
 
 	if err != nil {
 		fmt.Println(err)
@@ -42,8 +42,7 @@ func main() {
 	flag.Parse()
 
 	var icon string
-
-	tester.Analyze(*domain, *private)
+	tester.Analyze()
 
 	fmt.Printf("@ Testing domain '%s'\n", tester.Domain)
 	fmt.Printf("  Status: Connection Time, First Byte Time, Total Time\n")
@@ -64,7 +63,7 @@ func main() {
 			data.Output.ServerTitle)
 	}
 
-	for _, message := range tester.Messages() {
+	for _, message := range tester.ErrorMessages() {
 		fmt.Println("\033[0;91m\u2718\033[0m " + message.Error())
 	}
 
