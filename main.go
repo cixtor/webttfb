@@ -9,6 +9,7 @@ import (
 var domain = flag.String("d", "example.com", "Domain name to be tested")
 var sorting = flag.String("s", "status", "Criteria to sort the results")
 var private = flag.Bool("p", false, "Hide results from public stats")
+var local = flag.Bool("l", false, "Run the tests with local resources")
 
 func main() {
 	tester, err := NewTTFB(*domain, *private)
@@ -40,6 +41,20 @@ func main() {
 	}
 
 	flag.Parse()
+
+	if *local {
+		output, err := tester.LocalTest()
+
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Printf("@ Testing domain '%s'\n", tester.Domain)
+		fmt.Printf("%s", output) /* convert []byte to string */
+		fmt.Printf("  Finished\n")
+		return
+	}
 
 	var icon string
 	tester.Analyze()

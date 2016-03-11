@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"sort"
 	"strconv"
 	"sync"
@@ -297,4 +298,28 @@ func (t *TTFB) Analyze() {
 	}
 
 	wg.Wait()
+}
+
+// LocalTest leverages the power of CURL to execute a simple speed test against
+// the specified domain name, the test consists of a single HTTP GET request
+// from the current internet connection and reports the connection time, the
+// time to the first byte, the total transmission time among other things.
+func (t *TTFB) LocalTest() ([]byte, error) {
+	var stats string
+
+	stats += "  Connection:  %{time_connect} secs\n"
+	stats += "  FirstByte:   %{time_starttransfer} secs\n"
+	stats += "  TotalTime:   %{time_total} secs\n"
+	stats += "  NameLookup:  %{time_namelookup} secs\n"
+	stats += "  Redirection: %{time_redirect} secs\n"
+
+	out, err := exec.Command("/usr/bin/env",
+		"curl", "-L", "-s", "-o", "/dev/null",
+		"-w", stats, *domain).CombinedOutput()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
