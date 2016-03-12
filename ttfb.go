@@ -205,8 +205,6 @@ func (t *TTFB) ServerCheck(wg *sync.WaitGroup, unique string) error {
 		return err
 	}
 
-	t.Lock()
-
 	if data.Output.ConnectTime == "" {
 		data.Output.ConnectTime = zeroos
 	}
@@ -219,8 +217,8 @@ func (t *TTFB) ServerCheck(wg *sync.WaitGroup, unique string) error {
 		data.Output.TotalTime = zeroos
 	}
 
+	t.Lock()
 	t.Results = append(t.Results, data)
-
 	t.Unlock()
 
 	return nil
