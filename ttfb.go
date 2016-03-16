@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"sync"
 )
 
@@ -57,6 +58,12 @@ type Information struct {
 }
 
 type Statistics struct{}
+
+type ByStatus []Result
+
+func (a ByStatus) Len() int               { return len(a) }
+func (a ByStatus) Swap(i int, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByStatus) Less(i int, j int) bool { return a[i].Status > a[j].Status }
 
 func NewTTFB() (*TTFB, error) {
 	var tester TTFB
@@ -180,7 +187,21 @@ func (t *TTFB) serverCheck(wg *sync.WaitGroup, unique string, name string) error
 	}
 
 	t.Lock()
+
+	if data.Output.ConnectTime == "" {
+		data.Output.ConnectTime = "0.000"
+	}
+
+	if data.Output.FirstbyteTime == "" {
+		data.Output.FirstbyteTime = "0.000"
+	}
+
+	if data.Output.TotalTime == "" {
+		data.Output.TotalTime = "0.000"
+	}
+
 	t.results = append(t.results, data)
+
 	t.Unlock()
 
 	return nil
@@ -202,6 +223,8 @@ func (t *TTFB) Report(domain string) ([]Result, error) {
 	}
 
 	wg.Wait()
+
+	sort.Sort(ByStatus(t.results))
 
 	return t.results, nil
 }

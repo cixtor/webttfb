@@ -26,7 +26,7 @@ func main() {
 	fmt.Printf("  Status: Connection Time, First Byte Time, Total Time\n")
 
 	for _, data := range results {
-		fmt.Printf("- Testing server '%s' -> %s, %s, %s %s\n",
+		fmt.Printf("- %s -> %s, %s, %s %s\n",
 			data.Output.ServerID,
 			data.Output.ConnectTime,
 			data.Output.FirstbyteTime,
