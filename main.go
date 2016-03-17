@@ -22,11 +22,20 @@ func main() {
 		return
 	}
 
+	var icon string
+
 	fmt.Printf("@ Testing domain '%s'\n", tester.domain)
 	fmt.Printf("  Status: Connection Time, First Byte Time, Total Time\n")
 
 	for _, data := range results {
-		fmt.Printf("- %s -> %s, %s, %s %s\n",
+		if data.Status == 1 {
+			icon = "\033[0;92m\u2714\033[0m"
+		} else {
+			icon = "\033[0;91m\u2718\033[0m"
+		}
+
+		fmt.Printf("%s %s -> %s, %s, %s %s\n",
+			icon,
 			data.Output.ServerID,
 			data.Output.ConnectTime,
 			data.Output.FirstbyteTime,
