@@ -3,7 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 )
+
+var domain = flag.String("d", "example.com", "Domain name to be tested")
+var sorting = flag.String("s", "status", "Criteria to sort the results")
 
 func main() {
 	tester, err := NewTTFB()
@@ -13,21 +17,32 @@ func main() {
 		return
 	}
 
-	flag.Parse()
-
-	results, err := tester.Report(flag.Arg(0))
-
-	if err != nil {
-		fmt.Println(err)
-		return
+	flag.Usage = func() {
+		fmt.Println("Website TTFB — Time To First Byte")
+		fmt.Println("https://github.com/cixtor/webttfb")
+		fmt.Println()
+		fmt.Println("Time To First Byte (TTFB) is a measurement used as an indication of the")
+		fmt.Println("responsiveness of a webserver or other network resource. TTFB measures the")
+		fmt.Println("duration from the user or client making an HTTP request to the first byte of the")
+		fmt.Println("page being received by the client's browser. This time is made up of the socket")
+		fmt.Println("connection time, the time taken to send the HTTP request, and the time taken to")
+		fmt.Println("get the first byte of the page.")
+		fmt.Println()
+		fmt.Println("Usage:")
+		flag.PrintDefaults()
+		os.Exit(2)
 	}
+
+	flag.Parse()
 
 	var icon string
 
-	fmt.Printf("@ Testing domain '%s'\n", tester.domain)
+	tester.Analyze(*domain)
+
+	fmt.Printf("@ Testing domain '%s'\n", tester.Domain)
 	fmt.Printf("  Status: Connection Time, First Byte Time, Total Time\n")
 
-	for _, data := range results {
+	for _, data := range tester.Report() {
 		if data.Status == 1 {
 			icon = "\033[0;92m\u2714\033[0m"
 		} else {
@@ -41,6 +56,10 @@ func main() {
 			data.Output.FirstbyteTime,
 			data.Output.TotalTime,
 			data.Output.ServerTitle)
+	}
+
+	for _, message := range tester.Messages() {
+		fmt.Println("\033[0;91m\u2718\033[0m " + message.Error())
 	}
 
 	fmt.Println("  Finished")

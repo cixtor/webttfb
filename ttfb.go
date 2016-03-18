@@ -17,10 +17,11 @@ const config string = "servers.cfg"
 
 // TTFB holds the list of testing servers and the
 type TTFB struct {
-	domain  string
-	private bool
-	servers map[string]string
-	results []Result
+	Domain   string
+	private  bool
+	messages []error
+	servers  map[string]string
+	results  []Result
 	sync.Mutex
 }
 
@@ -126,7 +127,7 @@ func (t *TTFB) data(unique string) string {
 	form.Add("load_time_tester", "1")
 	form.Add("form_action", "test_load_time")
 	form.Add("location", unique)
-	form.Add("domain", t.domain)
+	form.Add("domain", t.Domain)
 
 	if t.private {
 		form.Add("is_private", "true")
@@ -147,7 +148,7 @@ func (t *TTFB) parseResponse(res io.Reader) (Result, error) {
 	return data, nil
 }
 
-func (t *TTFB) serverCheck(wg *sync.WaitGroup, unique string, name string) error {
+func (t *TTFB) serverCheck(wg *sync.WaitGroup, unique string) error {
 	defer wg.Done()
 
 	client := &http.Client{}
@@ -207,24 +208,35 @@ func (t *TTFB) serverCheck(wg *sync.WaitGroup, unique string, name string) error
 	return nil
 }
 
-func (t *TTFB) Report(domain string) ([]Result, error) {
+func (t *TTFB) Report() []Result {
+	sort.Sort(ByStatus(t.results))
+
+	return t.results
+}
+
+func (t *TTFB) Messages() []error {
+	return t.messages
+}
+
+func (t *TTFB) Analyze(domain string) {
 	if domain == "" {
-		return []Result{}, errors.New("Domain is invalid")
+		t.messages = append(t.messages, errors.New("Domain is invalid"))
+		return
 	}
 
 	var wg sync.WaitGroup
 
-	t.domain = domain /* track domain name */
+	t.Domain = domain /* track domain name */
 
 	wg.Add(len(t.servers))
 
-	for unique, server := range t.servers {
-		go t.serverCheck(&wg, unique, server)
+	for unique := range t.servers {
+		go func(wg *sync.WaitGroup, unique string) {
+			if err := t.serverCheck(wg, unique); err != nil {
+				t.messages = append(t.messages, err)
+			}
+		}(&wg, unique)
 	}
 
 	wg.Wait()
-
-	sort.Sort(ByStatus(t.results))
-
-	return t.results, nil
 }
