@@ -10,10 +10,12 @@ import (
 	"net/url"
 	"os"
 	"sort"
+	"strconv"
 	"sync"
 )
 
 const config string = "servers.cfg"
+const zeroos string = "0.000"
 
 // TTFB holds the list of testing servers and the
 type TTFB struct {
@@ -37,6 +39,7 @@ type Result struct {
 	LocationsCount int         `json:"_locations_count"` // 16,
 	TestedServers  int         `json:"_tested_servers"`  // 4,
 	IsLastTest     bool        `json:"_is_last_test"`    // false
+	Filter         float64     `json:"-"`
 }
 
 type Information struct {
@@ -58,13 +61,11 @@ type Information struct {
 	ServerLongitude string `json:"server_longitude"`  // "-79.5418358"
 }
 
-type Statistics struct{}
+type ByFilter []Result
 
-type ByStatus []Result
-
-func (a ByStatus) Len() int               { return len(a) }
-func (a ByStatus) Swap(i int, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByStatus) Less(i int, j int) bool { return a[i].Status > a[j].Status }
+func (a ByFilter) Len() int               { return len(a) }
+func (a ByFilter) Swap(i int, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByFilter) Less(i int, j int) bool { return a[i].Filter < a[j].Filter }
 
 func NewTTFB() (*TTFB, error) {
 	var tester TTFB
@@ -190,15 +191,15 @@ func (t *TTFB) serverCheck(wg *sync.WaitGroup, unique string) error {
 	t.Lock()
 
 	if data.Output.ConnectTime == "" {
-		data.Output.ConnectTime = "0.000"
+		data.Output.ConnectTime = zeroos
 	}
 
 	if data.Output.FirstbyteTime == "" {
-		data.Output.FirstbyteTime = "0.000"
+		data.Output.FirstbyteTime = zeroos
 	}
 
 	if data.Output.TotalTime == "" {
-		data.Output.TotalTime = "0.000"
+		data.Output.TotalTime = zeroos
 	}
 
 	t.results = append(t.results, data)
@@ -208,8 +209,40 @@ func (t *TTFB) serverCheck(wg *sync.WaitGroup, unique string) error {
 	return nil
 }
 
-func (t *TTFB) Report() []Result {
-	sort.Sort(ByStatus(t.results))
+func (t *TTFB) Report(sorting string) []Result {
+	var oldval string
+
+	for idx, data := range t.results {
+		switch sorting {
+		case "conn":
+			oldval = data.Output.ConnectTime
+		case "ttfb":
+			oldval = data.Output.FirstbyteTime
+		case "ttl":
+			oldval = data.Output.TotalTime
+		default:
+			oldval = "2.0"
+			if data.Status == 1 {
+				oldval = "1.0"
+			}
+		}
+
+		// Increase filter if the HTTP request failed.
+		if data.Status == 0 {
+			oldval = "360" + oldval
+		}
+
+		num, err := strconv.ParseFloat(oldval, 64)
+
+		if err != nil {
+			t.messages = append(t.messages, err)
+			continue
+		}
+
+		t.results[idx].Filter = num
+	}
+
+	sort.Sort(ByFilter(t.results))
 
 	return t.results
 }

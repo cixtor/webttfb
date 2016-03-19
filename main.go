@@ -28,6 +28,8 @@ func main() {
 		fmt.Println("connection time, the time taken to send the HTTP request, and the time taken to")
 		fmt.Println("get the first byte of the page.")
 		fmt.Println()
+		fmt.Println("Sorting options: status, conn, ttfb, ttl")
+		fmt.Println()
 		fmt.Println("Usage:")
 		flag.PrintDefaults()
 		os.Exit(2)
@@ -42,20 +44,21 @@ func main() {
 	fmt.Printf("@ Testing domain '%s'\n", tester.Domain)
 	fmt.Printf("  Status: Connection Time, First Byte Time, Total Time\n")
 
-	for _, data := range tester.Report() {
+	for _, data := range tester.Report(*sorting) {
 		if data.Status == 1 {
 			icon = "\033[0;92m\u2714\033[0m"
 		} else {
 			icon = "\033[0;91m\u2718\033[0m"
 		}
 
-		fmt.Printf("%s %s -> %s, %s, %s %s\n",
+		fmt.Printf("%s %s -> %s, %s, %s %s >>> %#v\n",
 			icon,
 			data.Output.ServerID,
 			data.Output.ConnectTime,
 			data.Output.FirstbyteTime,
 			data.Output.TotalTime,
-			data.Output.ServerTitle)
+			data.Output.ServerTitle,
+			data.Filter)
 	}
 
 	for _, message := range tester.Messages() {
