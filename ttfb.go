@@ -20,7 +20,7 @@ const zeroos string = "0.000"
 // TTFB holds the list of testing servers and the
 type TTFB struct {
 	Domain   string
-	private  bool
+	Private  bool
 	messages []error
 	servers  map[string]string
 	results  []Result
@@ -130,10 +130,8 @@ func (t *TTFB) data(unique string) string {
 	form.Add("location", unique)
 	form.Add("domain", t.Domain)
 
-	if t.private {
+	if t.Private {
 		form.Add("is_private", "true")
-	} else {
-		form.Add("is_private", "false")
 	}
 
 	return form.Encode()
@@ -251,7 +249,7 @@ func (t *TTFB) Messages() []error {
 	return t.messages
 }
 
-func (t *TTFB) Analyze(domain string) {
+func (t *TTFB) Analyze(domain string, private bool) {
 	if domain == "" {
 		t.messages = append(t.messages, errors.New("Domain is invalid"))
 		return
@@ -259,7 +257,8 @@ func (t *TTFB) Analyze(domain string) {
 
 	var wg sync.WaitGroup
 
-	t.Domain = domain /* track domain name */
+	t.Domain = domain   /* track domain name */
+	t.Private = private /* hide results from public */
 
 	wg.Add(len(t.servers))
 

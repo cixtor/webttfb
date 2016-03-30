@@ -8,6 +8,7 @@ import (
 
 var domain = flag.String("d", "example.com", "Domain name to be tested")
 var sorting = flag.String("s", "status", "Criteria to sort the results")
+var private = flag.Bool("p", false, "Hide results from public stats")
 
 func main() {
 	tester, err := NewTTFB()
@@ -39,7 +40,7 @@ func main() {
 
 	var icon string
 
-	tester.Analyze(*domain)
+	tester.Analyze(*domain, *private)
 
 	fmt.Printf("@ Testing domain '%s'\n", tester.Domain)
 	fmt.Printf("  Status: Connection Time, First Byte Time, Total Time\n")
@@ -51,14 +52,13 @@ func main() {
 			icon = "\033[0;91m\u2718\033[0m"
 		}
 
-		fmt.Printf("%s %s -> %s, %s, %s %s >>> %#v\n",
+		fmt.Printf("%s %s -> %s, %s, %s %s\n",
 			icon,
 			data.Output.ServerID,
 			data.Output.ConnectTime,
 			data.Output.FirstbyteTime,
 			data.Output.TotalTime,
-			data.Output.ServerTitle,
-			data.Filter)
+			data.Output.ServerTitle)
 	}
 
 	for _, message := range tester.Messages() {
