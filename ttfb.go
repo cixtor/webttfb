@@ -14,8 +14,9 @@ import (
 	"sync"
 )
 
-const config string = "servers.cfg"
 const zeroos string = "0.000"
+const config string = "servers.cfg"
+const service string = "https://performance.sucuri.net/index.php?ajaxcall"
 
 // TTFB holds the list of testing servers and the
 type TTFB struct {
@@ -28,37 +29,36 @@ type TTFB struct {
 }
 
 type Result struct {
-	Status         int         `json:"status"`           // 1,
-	Action         string      `json:"action"`           // "load_time_tester",
-	Message        string      `json:"message"`          // "cixtor.com tested successfully",
-	ResetLastTest  bool        `json:"reset_last_test"`  // false,
-	DataFromCache  bool        `json:"data_from_cache"`  // false,
-	LastTestTime   int         `json:"last_test_time"`   // 0,
-	LastTestAgo    string      `json:"last_test_ago"`    // 0,
-	Output         Information `json:"output"`           // {},
-	LocationsCount int         `json:"_locations_count"` // 16,
-	TestedServers  int         `json:"_tested_servers"`  // 4,
-	IsLastTest     bool        `json:"_is_last_test"`    // false
-	Filter         float64     `json:"-"`
+	Status         int     `json:"status"`
+	Action         string  `json:"action"`
+	Message        string  `json:"message"`
+	ResetLastTest  bool    `json:"reset_last_test"`
+	DataFromCache  bool    `json:"data_from_cache"`
+	LastTestTime   int     `json:"last_test_time"`
+	LocationsCount int     `json:"_locations_count"`
+	TestedServers  int     `json:"_tested_servers"`
+	IsLastTest     bool    `json:"_is_last_test"`
+	Output         Info    `json:"output"`
+	Filter         float64 `json:"-"`
 }
 
-type Information struct {
-	Domain          string `json:"domain"`            // "cixtor.com",
-	IP              string `json:"ip"`                // "192.124.249.4",
-	ConnectTime     string `json:"connect_time"`      // "0.074",
-	FirstbyteTime   string `json:"firstbyte_time"`    // "0.718",
-	TotalTime       string `json:"total_time"`        // "1.018",
-	DomainID        string `json:"domain_id"`         // "ba4d8d555fb3ad8f4c1a9a39ccc44762f5a28b8f",
-	DomainUnique    string `json:"domain_unique"`     // "ba4d8d5",
-	ServerID        string `json:"server_id"`         // "w60o1aw",
-	ServerAbbr      string `json:"server_abbr"`       // "ca",
-	ServerTitle     string `json:"server_title"`      // "Canada, Toronto",
-	ServerFlagImage string `json:"server_flag_image"` // "<img src=\"/assets/blank.1x1.png\" alt=\"Canada, Toronto\" class=\"flags-ca pull-left\" />",
-	DomainAndIP     string `json:"domain_and_ip"`     // "cixtor.com <em>(192.124.249.4)</em>",
-	RequestTime     int64  `json:"request_time"`      // 1481562825,
-	ServerLocation  string `json:"server_location"`   // "can_toronto",
-	ServerLatitude  string `json:"server_latitude"`   // "43.1549108",
-	ServerLongitude string `json:"server_longitude"`  // "-79.5418358"
+type Info struct {
+	Domain          string `json:"domain"`
+	IP              string `json:"ip"`
+	ConnectTime     string `json:"connect_time"`
+	FirstbyteTime   string `json:"firstbyte_time"`
+	TotalTime       string `json:"total_time"`
+	DomainID        string `json:"domain_id"`
+	DomainUnique    string `json:"domain_unique"`
+	ServerID        string `json:"server_id"`
+	ServerAbbr      string `json:"server_abbr"`
+	ServerTitle     string `json:"server_title"`
+	ServerFlagImage string `json:"server_flag_image"`
+	DomainAndIP     string `json:"domain_and_ip"`
+	RequestTime     int64  `json:"request_time"`
+	ServerLocation  string `json:"server_location"`
+	ServerLatitude  string `json:"server_latitude"`
+	ServerLongitude string `json:"server_longitude"`
 }
 
 type ByFilter []Result
@@ -151,9 +151,8 @@ func (t *TTFB) serverCheck(wg *sync.WaitGroup, unique string) error {
 	defer wg.Done()
 
 	client := &http.Client{}
-	urlStr := "https://performance.sucuri.net/index.php?ajaxcall"
 	body := bytes.NewBufferString(t.data(unique))
-	req, err := http.NewRequest("POST", urlStr, body)
+	req, err := http.NewRequest("POST", service, body)
 
 	if err != nil {
 		return err
