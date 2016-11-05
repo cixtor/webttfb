@@ -7,3 +7,11 @@
 > Often, a smaller (faster) TTFB size is seen as a benchmark of a well-configured server application. For example, a lower Time To First Byte could point to fewer dynamic calculations being performed by the web-server, although this is often due to caching at either the DNS, server, or application level. More commonly, a very low TTFB is observed with statically served web pages, while larger TTFB is often seen with larger, dynamic data requests being pulled from a database.
 >
 > — More information at [Time To First Byte, Wikipedia](https://en.wikipedia.org/wiki/Time_To_First_Byte)
+
+### Installation
+
+```shell
+go get -u github.com/cixtor/webttfb
+```
+
+![Screenshot](screenshot.png)
