@@ -149,12 +149,25 @@ func (t *TTFB) FormData(unique string) string {
 	return form.Encode()
 }
 
+// BasicResult returns the Result object with at least the server identifier and
+// testing server name filled in. This is useful in scenarios when the HTTP
+// request fails because of a timeout and we need to report the basic
+// information back to the main process.
+func (t *TTFB) BasicResult(unique string) Result {
+	var data Result
+
+	data.Output.ServerID = unique
+	data.Output.ServerTitle = t.Servers[unique]
+
+	return data
+}
+
 // ParseResponse reads and decodes the JSON-encoded data from the API service.
-func (t *TTFB) ParseResponse(res io.Reader) (Result, error) {
+func (t *TTFB) ParseResponse(res io.Reader, unique string) (Result, error) {
 	var data Result
 
 	if err := json.NewDecoder(res).Decode(&data); err != nil {
-		return Result{}, err
+		return t.BasicResult(unique), err
 	}
 
 	return data, nil
@@ -167,7 +180,7 @@ func (t *TTFB) ServerCheck(ch chan Result, unique string) error {
 	req, err := http.NewRequest("POST", service, body)
 
 	if err != nil {
-		ch <- Result{}
+		ch <- t.BasicResult(unique)
 		return err
 	}
 
@@ -184,7 +197,7 @@ func (t *TTFB) ServerCheck(ch chan Result, unique string) error {
 	res, err := client.Do(req)
 
 	if err != nil {
-		ch <- Result{}
+		ch <- t.BasicResult(unique)
 		return err
 	}
 
@@ -193,10 +206,10 @@ func (t *TTFB) ServerCheck(ch chan Result, unique string) error {
 	var buf bytes.Buffer
 	(&buf).ReadFrom(res.Body)
 
-	data, err := t.ParseResponse(&buf)
+	data, err := t.ParseResponse(&buf, unique)
 
 	if err != nil {
-		ch <- Result{}
+		ch <- t.BasicResult(unique)
 		return err
 	}
 

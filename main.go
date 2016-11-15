@@ -93,7 +93,7 @@ func main() {
 	}
 
 	for _, message := range tester.ErrorMessages() {
-		fmt.Println("\033[0;91m\u2718\033[0m " + message.Error())
+		fmt.Println("\033[0;94m\u2022\033[0m " + message.Error())
 	}
 
 	fmt.Print("  Average")
