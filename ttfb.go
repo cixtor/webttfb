@@ -16,7 +16,7 @@ import (
 )
 
 const zeroos string = "0.000"
-const config string = "servers.cfg"
+const config string = ".webttfb.cfg"
 const service string = "https://performance.sucuri.net/index.php?ajaxcall"
 
 // TTFB holds the list of testing servers and the
