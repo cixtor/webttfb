@@ -135,6 +135,9 @@ func PerformanceGrade(t *TTFB) string {
 	} else if average <= g.worst() {
 		grade = "E"
 		color = "009"
+	} else {
+		grade = "~"
+		color = "007"
 	}
 
 	return fmt.Sprintf("Performance: \033[48;5;%sm %s \033[0m", color, grade)
