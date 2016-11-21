@@ -278,7 +278,7 @@ func (t *TTFB) Analyze() {
 		done++
 		data := <-ch
 		// Print a loading message until finished.
-		fmt.Printf("\rTesting %02d/%d ...", done, total)
+		fmt.Printf("\r  Testing %02d/%d ...", done, total)
 		t.Results = append(t.Results, data)
 	}
 
