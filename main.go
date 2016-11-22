@@ -12,13 +12,6 @@ var private = flag.Bool("p", false, "Hide results from public stats")
 var local = flag.Bool("l", false, "Run the tests with local resources")
 
 func main() {
-	tester, err := NewTTFB(*domain, *private)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
 	flag.Usage = func() {
 		fmt.Println("Website TTFB")
 		fmt.Println("https://cixtor.com/")
@@ -41,6 +34,13 @@ func main() {
 	}
 
 	flag.Parse()
+
+	tester, err := NewTTFB(*domain, *private)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	if *local {
 		output, err := tester.LocalTest()
