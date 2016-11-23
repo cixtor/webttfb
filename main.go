@@ -69,7 +69,7 @@ func main() {
 			icon = "\033[0;91m\u2718\033[0m"
 		}
 
-		fmt.Printf("%s %s -> %s, %s, %s %s\n",
+		fmt.Printf("%s %s -> %.3f, %.3f, %.3f %s\n",
 			icon,
 			data.Output.ServerID,
 			data.Output.ConnectTime,

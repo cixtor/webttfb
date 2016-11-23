@@ -11,11 +11,9 @@ import (
 	"os"
 	"os/exec"
 	"sort"
-	"strconv"
 	"sync"
 )
 
-const zeroos string = "0.000"
 const config string = ".webttfb.cfg"
 const service string = "https://performance.sucuri.net/index.php?ajaxcall"
 
@@ -46,22 +44,22 @@ type Result struct {
 
 // Info holds the data of each test case.
 type Info struct {
-	Domain          string `json:"domain"`
-	IP              string `json:"ip"`
-	ConnectTime     string `json:"connect_time"`
-	FirstbyteTime   string `json:"firstbyte_time"`
-	TotalTime       string `json:"total_time"`
-	DomainID        string `json:"domain_id"`
-	DomainUnique    string `json:"domain_unique"`
-	ServerID        string `json:"server_id"`
-	ServerAbbr      string `json:"server_abbr"`
-	ServerTitle     string `json:"server_title"`
-	ServerFlagImage string `json:"server_flag_image"`
-	DomainAndIP     string `json:"domain_and_ip"`
-	RequestTime     int64  `json:"request_time"`
-	ServerLocation  string `json:"server_location"`
-	ServerLatitude  string `json:"server_latitude"`
-	ServerLongitude string `json:"server_longitude"`
+	Domain          string  `json:"domain"`
+	IP              string  `json:"ip"`
+	ConnectTime     float64 `json:"connect_time,string"`
+	FirstbyteTime   float64 `json:"firstbyte_time,string"`
+	TotalTime       float64 `json:"total_time,string"`
+	DomainID        string  `json:"domain_id"`
+	DomainUnique    string  `json:"domain_unique"`
+	ServerID        string  `json:"server_id"`
+	ServerAbbr      string  `json:"server_abbr"`
+	ServerTitle     string  `json:"server_title"`
+	ServerFlagImage string  `json:"server_flag_image"`
+	DomainAndIP     string  `json:"domain_and_ip"`
+	RequestTime     int64   `json:"request_time"`
+	ServerLocation  string  `json:"server_location"`
+	ServerLatitude  float64 `json:"server_latitude,string"`
+	ServerLongitude float64 `json:"server_longitude,string"`
 }
 
 // ByFilter implements sort.Interface to allow data sorting.
@@ -205,18 +203,6 @@ func (t *TTFB) ServerCheck(wg *sync.WaitGroup, unique string) error {
 		return err
 	}
 
-	if data.Output.ConnectTime == "" {
-		data.Output.ConnectTime = zeroos
-	}
-
-	if data.Output.FirstbyteTime == "" {
-		data.Output.FirstbyteTime = zeroos
-	}
-
-	if data.Output.TotalTime == "" {
-		data.Output.TotalTime = zeroos
-	}
-
 	t.Lock()
 	t.Results = append(t.Results, data)
 	t.Unlock()
@@ -232,7 +218,7 @@ func (t *TTFB) ServerCheck(wg *sync.WaitGroup, unique string) error {
 // returned as strings and the program parses and converts them to floating
 // points for accessibility.
 func (t *TTFB) Report(sorting string) []Result {
-	var oldval string
+	var oldval float64
 
 	for idx, data := range t.Results {
 		switch sorting {
@@ -243,25 +229,24 @@ func (t *TTFB) Report(sorting string) []Result {
 		case "ttl":
 			oldval = data.Output.TotalTime
 		default:
-			oldval = "2.0"
+			// If the HTTP request status is equal to the integer one we
+			// consider it a successful operation and a failure otherwise. Since
+			// the sort interface works with a less-than comparison by default
+			// we have to invert the values and make the non-positive status
+			// greater than the expected number so the entries associated with a
+			// failure are displayed at the end of the table.
+			oldval = 2.0
 			if data.Status == 1 {
-				oldval = "1.0"
+				oldval = 1.0
 			}
 		}
 
 		// Increase filter if the HTTP request failed.
 		if data.Status == 0 {
-			oldval = "360" + oldval
+			oldval = 360 + oldval
 		}
 
-		num, err := strconv.ParseFloat(oldval, 64)
-
-		if err != nil {
-			t.Messages = append(t.Messages, err)
-			continue
-		}
-
-		t.Results[idx].Filter = num
+		t.Results[idx].Filter = oldval
 	}
 
 	sort.Sort(ByFilter(t.Results))
