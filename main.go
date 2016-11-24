@@ -6,6 +6,12 @@ import (
 	"os"
 )
 
+const config string = ".webttfb.cfg"
+const service string = "https://performance.sucuri.net/index.php?ajaxcall"
+const timeToFirstByte string = "ttfb"
+const connectionTime string = "conn"
+const totalTime string = "ttl"
+
 var domain = flag.String("d", "example.com", "Domain name to be tested")
 var sorting = flag.String("s", "status", "Criteria to sort the results")
 var private = flag.Bool("p", false, "Hide results from public stats")
@@ -88,7 +94,18 @@ func main() {
 		fmt.Println("\033[0;91m\u2718\033[0m " + message.Error())
 	}
 
+	fmt.Print("\x20\x20")
+	fmt.Print("Average")
+	fmt.Print("\x20\x20")
+	fmt.Printf("%.3f", tester.Average(connectionTime))
+	fmt.Print("\x20\x20")
+	fmt.Printf("%.3f", tester.Average(timeToFirstByte))
+	fmt.Print("\x20\x20")
+	fmt.Printf("%.3f", tester.Average(totalTime))
 	fmt.Println()
+
+	fmt.Println()
+	fmt.Println("* Time is in seconds")
 	fmt.Println("* Conn — Connection Time")
 	fmt.Println("* TTFB — Time To First Byte")
 	fmt.Println("* TTL  — Total Time")

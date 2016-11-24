@@ -74,15 +74,15 @@ func Colorize(group string, value float64) string {
 		return fmt.Sprintf("%.3f", value)
 	}
 
-	if group == "conn" {
+	if group == connectionTime {
 		return Paint(ColorConn{}, value)
 	}
 
-	if group == "ttfb" {
+	if group == timeToFirstByte {
 		return Paint(ColorTTFB{}, value)
 	}
 
-	if group == "ttl" {
+	if group == totalTime {
 		return Paint(ColorTTL{}, value)
 	}
 

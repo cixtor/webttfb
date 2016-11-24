@@ -14,9 +14,6 @@ import (
 	"sync"
 )
 
-const config string = ".webttfb.cfg"
-const service string = "https://performance.sucuri.net/index.php?ajaxcall"
-
 // TTFB holds the list of testing servers and the
 type TTFB struct {
 	Domain   string
@@ -222,11 +219,11 @@ func (t *TTFB) Report(sorting string) []Result {
 
 	for idx, data := range t.Results {
 		switch sorting {
-		case "conn":
+		case connectionTime:
 			oldval = data.Output.ConnectTime
-		case "ttfb":
+		case timeToFirstByte:
 			oldval = data.Output.FirstbyteTime
-		case "ttl":
+		case totalTime:
 			oldval = data.Output.TotalTime
 		default:
 			// If the HTTP request status is equal to the integer one we
@@ -305,4 +302,45 @@ func (t *TTFB) LocalTest() ([]byte, error) {
 	}
 
 	return out, nil
+}
+
+// Average measures the average responsiveness of each test case ignoring the
+// highest and lowest value to increase the accuracy of the total number. Notice
+// that if the number of successful HTTP requests is lower than 3 it means we
+// cannot use any value because after the removal of the highest and lowest we
+// will be left with nothing so we return zero.
+func (t *TTFB) Average(group string) float64 {
+	var total float64
+	var values []float64
+
+	for _, data := range t.Results {
+		if group == connectionTime {
+			values = append(values, data.Output.ConnectTime)
+			continue
+		}
+
+		if group == timeToFirstByte {
+			values = append(values, data.Output.FirstbyteTime)
+			continue
+		}
+
+		if group == totalTime {
+			values = append(values, data.Output.TotalTime)
+			continue
+		}
+	}
+
+	// There is no enough data to average.
+	if len(values) < 3 {
+		return 0.0
+	}
+
+	sort.Float64s(values)
+
+	// Drop first and last values for accuracy.
+	for i := 1; i < len(values)-1; i++ {
+		total += values[i]
+	}
+
+	return total / float64(len(values)-2)
 }
