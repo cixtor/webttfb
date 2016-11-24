@@ -59,28 +59,37 @@ func main() {
 	var icon string
 	tester.Analyze()
 
-	fmt.Printf("@ Testing domain '%s'\n", tester.Domain)
-	fmt.Printf("  Status: Connection Time, First Byte Time, Total Time\n")
+	fmt.Println("@ Testing domain [" + tester.Domain + "]")
+	fmt.Println("# Status:  Conn   TTFB   TTL    Location")
+	fmt.Println()
 
 	for _, data := range tester.Report(*sorting) {
 		if data.Status == 1 {
-			icon = "\033[0;92m\u2714\033[0m"
+			icon = "\033[0;32m\u2714\033[0m"
 		} else {
-			icon = "\033[0;91m\u2718\033[0m"
+			icon = "\033[0;31m\u2718\033[0m"
 		}
 
-		fmt.Printf("%s %s -> %s, %s, %s %s\n",
-			icon,
-			data.Output.ServerID,
-			Colorize("conn", data.Output.ConnectTime),
-			Colorize("ttfb", data.Output.FirstbyteTime),
-			Colorize("ttl", data.Output.TotalTime),
-			data.Output.ServerTitle)
+		fmt.Print(icon)
+		fmt.Print("\x20")
+		fmt.Print("\033[0;2m" + data.Output.ServerID + "\033[0m")
+		fmt.Print("\x20\x20")
+		fmt.Print(Colorize("conn", data.Output.ConnectTime))
+		fmt.Print("\x20\x20")
+		fmt.Print(Colorize("ttfb", data.Output.FirstbyteTime))
+		fmt.Print("\x20\x20")
+		fmt.Print(Colorize("ttl", data.Output.TotalTime))
+		fmt.Print("\x20\x20")
+		fmt.Print(data.Output.ServerTitle)
+		fmt.Println()
 	}
 
 	for _, message := range tester.ErrorMessages() {
 		fmt.Println("\033[0;91m\u2718\033[0m " + message.Error())
 	}
 
-	fmt.Println("  Finished")
+	fmt.Println()
+	fmt.Println("* Conn — Connection Time")
+	fmt.Println("* TTFB — Time To First Byte")
+	fmt.Println("* TTL  — Total Time")
 }
