@@ -344,3 +344,42 @@ func (t *TTFB) Average(group string) float64 {
 
 	return total / float64(len(values)-2)
 }
+
+// PerformanceGrade evaluates the average HTTP request total time through all
+// the testing servers and assigns a grade to the website's responsiveness. If
+// there were too many failures during the testing process the program defaults
+// to the worst grade.
+func (t *TTFB) PerformanceGrade() string {
+	average := t.Average(totalTime)
+
+	// Assign a better grade only if most tests succeeded.
+	if len(t.Messages) > 4 || average <= 0 {
+		return "F"
+	}
+
+	if average <= 0.510 {
+		return "A+"
+	}
+
+	if average <= 0.850 {
+		return "A"
+	}
+
+	if average <= 1.150 {
+		return "B"
+	}
+
+	if average <= 1.550 {
+		return "C"
+	}
+
+	if average <= 1.950 {
+		return "D"
+	}
+
+	if average <= 2.500 {
+		return "E"
+	}
+
+	return "~" /* Unknown performance grade */
+}

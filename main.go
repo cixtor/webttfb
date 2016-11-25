@@ -102,11 +102,14 @@ func main() {
 	fmt.Printf("%.3f", tester.Average(timeToFirstByte))
 	fmt.Print("\x20\x20")
 	fmt.Printf("%.3f", tester.Average(totalTime))
+	fmt.Print("\x20\x20")
+	fmt.Printf("Performance: %s", tester.PerformanceGrade())
 	fmt.Println()
 
 	fmt.Println()
-	fmt.Println("* Time is in seconds")
 	fmt.Println("* Conn — Connection Time")
 	fmt.Println("* TTFB — Time To First Byte")
 	fmt.Println("* TTL  — Total Time")
+	fmt.Println("* Time is in seconds")
+	fmt.Println("* Performance based on TTL")
 }
