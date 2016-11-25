@@ -103,7 +103,7 @@ func main() {
 	fmt.Print("\x20\x20")
 	fmt.Printf("%.3f", tester.Average(totalTime))
 	fmt.Print("\x20\x20")
-	fmt.Printf("Performance: %s", tester.PerformanceGrade())
+	fmt.Print(PerformanceGrade(tester))
 	fmt.Println()
 
 	fmt.Println()
