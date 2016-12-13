@@ -5,13 +5,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"sort"
-	"sync"
 )
 
 // TTFB holds the list of testing servers and the
@@ -21,7 +21,6 @@ type TTFB struct {
 	Messages []error
 	Servers  map[string]string
 	Results  []Result
-	sync.Mutex
 }
 
 // Result holds the information of each test case.
@@ -162,14 +161,13 @@ func (t *TTFB) ParseResponse(res io.Reader) (Result, error) {
 }
 
 // ServerCheck sends the HTTP request to the API service.
-func (t *TTFB) ServerCheck(wg *sync.WaitGroup, unique string) error {
-	defer wg.Done()
-
+func (t *TTFB) ServerCheck(ch chan Result, unique string) error {
 	client := &http.Client{}
 	body := bytes.NewBufferString(t.FormData(unique))
 	req, err := http.NewRequest("POST", service, body)
 
 	if err != nil {
+		ch <- Result{}
 		return err
 	}
 
@@ -186,6 +184,7 @@ func (t *TTFB) ServerCheck(wg *sync.WaitGroup, unique string) error {
 	res, err := client.Do(req)
 
 	if err != nil {
+		ch <- Result{}
 		return err
 	}
 
@@ -197,13 +196,11 @@ func (t *TTFB) ServerCheck(wg *sync.WaitGroup, unique string) error {
 	data, err := t.ParseResponse(&buf)
 
 	if err != nil {
+		ch <- Result{}
 		return err
 	}
 
-	t.Lock()
-	t.Results = append(t.Results, data)
-	t.Unlock()
-
+	ch <- data
 	return nil
 }
 
@@ -265,19 +262,27 @@ func (t *TTFB) ErrorMessages() []error {
 // return a JSON-encoded object with information that describes the speed of the
 // website from different locations in the world.
 func (t *TTFB) Analyze() {
-	var wg sync.WaitGroup
-
-	wg.Add(len(t.Servers))
+	var done int
+	total := len(t.Servers)
+	ch := make(chan Result, total)
 
 	for unique := range t.Servers {
-		go func(wg *sync.WaitGroup, unique string) {
-			if err := t.ServerCheck(wg, unique); err != nil {
+		go func(ch chan Result, unique string) {
+			if err := t.ServerCheck(ch, unique); err != nil {
 				t.Messages = append(t.Messages, err)
 			}
-		}(&wg, unique)
+		}(ch, unique)
 	}
 
-	wg.Wait()
+	for idx := 0; idx < total; idx++ {
+		done++
+		data := <-ch
+		// Print a loading message until finished.
+		fmt.Printf("\rTesting %02d/%d ...", done, total)
+		t.Results = append(t.Results, data)
+	}
+
+	fmt.Printf("\r%17s\n", "\x20") /* reset previous line */
 }
 
 // LocalTest leverages the power of CURL to execute a simple speed test against

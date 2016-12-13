@@ -63,11 +63,11 @@ func main() {
 	}
 
 	var icon string
-	tester.Analyze()
 
 	fmt.Println("@ Testing domain [" + tester.Domain + "]")
 	fmt.Println("# Status:  Conn   TTFB   TTL    Location")
-	fmt.Println()
+
+	tester.Analyze()
 
 	for _, data := range tester.Report(*sorting) {
 		if data.Status == 1 {
