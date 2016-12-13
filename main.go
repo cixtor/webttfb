@@ -32,10 +32,17 @@ func main() {
 		fmt.Println("connection time, the time taken to send the HTTP request, and the time taken to")
 		fmt.Println("get the first byte of the page.")
 		fmt.Println()
-		fmt.Println("Sorting options: status, conn, ttfb, ttl")
+		fmt.Println("Sorting: status, conn, ttfb, ttl")
 		fmt.Println()
 		fmt.Println("Usage:")
 		flag.PrintDefaults()
+		fmt.Println()
+		fmt.Println("Abbrs:")
+		fmt.Println("  Time is measured in seconds")
+		fmt.Println("  Performance is based on TTL")
+		fmt.Println("  Conn — Connection Time")
+		fmt.Println("  TTFB — Time To First Byte")
+		fmt.Println("  TTL  — Total Time")
 		os.Exit(2)
 	}
 
@@ -65,7 +72,7 @@ func main() {
 	var icon string
 
 	fmt.Println("@ Testing domain [" + tester.Domain + "]")
-	fmt.Println("# Status:  Conn   TTFB   TTL    Location")
+	fmt.Println("  Status:  Conn   TTFB   TTL    Location")
 
 	tester.Analyze()
 
@@ -77,16 +84,11 @@ func main() {
 		}
 
 		fmt.Print(icon)
-		fmt.Print("\x20")
-		fmt.Print("\033[0;2m" + data.Output.ServerID + "\033[0m")
-		fmt.Print("\x20\x20")
-		fmt.Print(Colorize("conn", data.Output.ConnectTime))
-		fmt.Print("\x20\x20")
-		fmt.Print(Colorize("ttfb", data.Output.FirstbyteTime))
-		fmt.Print("\x20\x20")
-		fmt.Print(Colorize("ttl", data.Output.TotalTime))
-		fmt.Print("\x20\x20")
-		fmt.Print(data.Output.ServerTitle)
+		fmt.Printf(" \033[0;2m%s\033[0m", data.Output.ServerID)
+		fmt.Printf("  %s", Colorize("conn", data.Output.ConnectTime))
+		fmt.Printf("  %s", Colorize("ttfb", data.Output.FirstbyteTime))
+		fmt.Printf("  %s", Colorize("ttl", data.Output.TotalTime))
+		fmt.Printf("  %s", data.Output.ServerTitle)
 		fmt.Println()
 	}
 
@@ -94,22 +96,12 @@ func main() {
 		fmt.Println("\033[0;91m\u2718\033[0m " + message.Error())
 	}
 
-	fmt.Print("\x20\x20")
-	fmt.Print("Average")
-	fmt.Print("\x20\x20")
-	fmt.Printf("%.3f", tester.Average(connectionTime))
-	fmt.Print("\x20\x20")
-	fmt.Printf("%.3f", tester.Average(timeToFirstByte))
-	fmt.Print("\x20\x20")
-	fmt.Printf("%.3f", tester.Average(totalTime))
-	fmt.Print("\x20\x20")
-	fmt.Print(PerformanceGrade(tester))
-	fmt.Println()
+	fmt.Print("  Average")
+	fmt.Printf("  %.3f", tester.Average(connectionTime))
+	fmt.Printf("  %.3f", tester.Average(timeToFirstByte))
+	fmt.Printf("  %.3f", tester.Average(totalTime))
+	fmt.Printf("  %s\n", PerformanceGrade(tester))
+	fmt.Println("  Finished")
 
-	fmt.Println()
-	fmt.Println("* Conn — Connection Time")
-	fmt.Println("* TTFB — Time To First Byte")
-	fmt.Println("* TTL  — Total Time")
-	fmt.Println("* Time is in seconds")
-	fmt.Println("* Performance based on TTL")
+	os.Exit(0)
 }

@@ -282,7 +282,7 @@ func (t *TTFB) Analyze() {
 		t.Results = append(t.Results, data)
 	}
 
-	fmt.Printf("\r%17s\n", "\x20") /* reset previous line */
+	fmt.Print("\r") /* reset previous line */
 }
 
 // LocalTest leverages the power of CURL to execute a simple speed test against
