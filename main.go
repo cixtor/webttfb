@@ -63,9 +63,8 @@ func main() {
 			return
 		}
 
-		fmt.Printf("@ Testing domain '%s'\n", tester.Domain)
-		fmt.Printf("%s", output) /* convert []byte to string */
-		fmt.Printf("  Finished\n")
+		/* convert []byte to string */
+		fmt.Printf("%s", output)
 		return
 	}
 

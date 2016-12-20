@@ -302,14 +302,25 @@ func (t *TTFB) Analyze() {
 // the specified domain name, the test consists of a single HTTP GET request
 // from the current internet connection and reports the connection time, the
 // time to the first byte, the total transmission time among other things.
+//
+// @ref: https://curl.haxx.se/docs/manpage.html
 func (t *TTFB) LocalTest() ([]byte, error) {
 	var stats string
 
-	stats += "  Connection:  %{time_connect} secs\n"
-	stats += "  FirstByte:   %{time_starttransfer} secs\n"
-	stats += "  TotalTime:   %{time_total} secs\n"
-	stats += "  NameLookup:  %{time_namelookup} secs\n"
-	stats += "  Redirection: %{time_redirect} secs\n"
+	stats += "{"
+	stats += "\"domain\": \"" + t.Domain + "\","
+	stats += "\"http_code\": %{http_code},"
+	stats += "\"connection\": %{time_connect},"
+	stats += "\"time_to_first_byte\": %{time_starttransfer},"
+	stats += "\"total_time\": %{time_total},"
+	stats += "\"namelookup\": %{time_namelookup},"
+	stats += "\"redirect_time\": %{time_redirect},"
+	stats += "\"num_redirects\": %{num_redirects},"
+	stats += "\"pretransfer\": %{time_pretransfer},"
+	stats += "\"appconnect\": %{time_appconnect},"
+	stats += "\"download_speed\": %{speed_download},"
+	stats += "\"upload_speed\": %{speed_upload}"
+	stats += "}"
 
 	out, err := exec.Command("/usr/bin/env",
 		"curl", "-L", "-s", "-o", "/dev/null",
