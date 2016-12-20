@@ -64,7 +64,7 @@ func main() {
 		}
 
 		/* convert []byte to string */
-		fmt.Printf("%s", output)
+		fmt.Printf("%s\n", output)
 		return
 	}
 
