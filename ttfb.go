@@ -107,6 +107,11 @@ func (t *TTFB) LoadServers() error {
 			continue
 		}
 
+		// Skip comments using .ini file format.
+		if line[0:1] == ";" || line[0:1] == "#" {
+			continue
+		}
+
 		unique = line[0:7]
 		name = line[9:]
 
