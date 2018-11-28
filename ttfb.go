@@ -25,17 +25,17 @@ type TTFB struct {
 
 // Result holds the information of each test case.
 type Result struct {
-	Status         int     `json:"status"`
-	Action         string  `json:"action"`
 	Message        string  `json:"message"`
-	ResetLastTest  bool    `json:"reset_last_test"`
-	DataFromCache  bool    `json:"data_from_cache"`
+	Action         string  `json:"action"`
+	Status         int     `json:"status"`
 	LastTestTime   int     `json:"last_test_time"`
 	LocationsCount int     `json:"_locations_count"`
 	TestedServers  int     `json:"_tested_servers"`
-	IsLastTest     bool    `json:"_is_last_test"`
 	Output         Info    `json:"output"`
 	Filter         float64 `json:"-"`
+	IsLastTest     bool    `json:"_is_last_test"`
+	ResetLastTest  bool    `json:"reset_last_test"`
+	DataFromCache  bool    `json:"data_from_cache"`
 }
 
 // Info holds the data of each test case.
@@ -75,7 +75,7 @@ func NewTTFB(domain string, private bool) (*TTFB, error) {
 
 	tester.Domain = domain   /* track domain name */
 	tester.Private = private /* hide results from public */
-	tester.Servers = make(map[string]string, 0)
+	tester.Servers = make(map[string]string)
 
 	if err := tester.LoadServers(); err != nil {
 		return nil, err
@@ -92,7 +92,11 @@ func (t *TTFB) LoadServers() error {
 		return err
 	}
 
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			fmt.Println("file.Close", err)
+		}
+	}()
 
 	var line string
 	var name string
@@ -206,10 +210,17 @@ func (t *TTFB) ServerCheck(ch chan Result, unique string) error {
 		return err
 	}
 
-	defer res.Body.Close()
+	defer func() {
+		if err2 := res.Body.Close(); err2 != nil {
+			fmt.Println("res.Body.Close", err2)
+		}
+	}()
 
 	var buf bytes.Buffer
-	(&buf).ReadFrom(res.Body)
+
+	if _, err2 := (&buf).ReadFrom(res.Body); err2 != nil {
+		fmt.Println("buf.ReadFrom", err2)
+	}
 
 	data, err := t.ParseResponse(&buf, unique)
 
