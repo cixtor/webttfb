@@ -70,11 +70,11 @@ func Paint(c Colorizer, value float64) string {
 	}
 
 	if value > c.warning() {
-		return fmt.Sprintf("\033[48;5;011m%.3f\033[0m", value)
+		return fmt.Sprintf("\033[48;5;226m%.3f\033[0m", value)
 	}
 
 	if value < c.success() {
-		return fmt.Sprintf("\033[48;5;010m%.3f\033[0m", value)
+		return fmt.Sprintf("\033[48;5;034m%.3f\033[0m", value)
 	}
 
 	return fmt.Sprintf("%.3f", value)
@@ -122,10 +122,10 @@ func PerformanceGrade(t *TTFB) string {
 		color = "014"
 	} else if average <= g.excellent() {
 		grade = "A"
-		color = "010"
+		color = "034"
 	} else if average <= g.good() {
 		grade = "B"
-		color = "011"
+		color = "226"
 	} else if average <= g.bad() {
 		grade = "C"
 		color = "9"

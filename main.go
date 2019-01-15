@@ -95,12 +95,15 @@ func main() {
 		fmt.Println("\033[0;94m\u2022\033[0m " + message.Error())
 	}
 
-	fmt.Print("  Average")
-	fmt.Printf("  %.3f", tester.Average(connectionTime))
-	fmt.Printf("  %.3f", tester.Average(timeToFirstByte))
-	fmt.Printf("  %.3f", tester.Average(totalTime))
-	fmt.Printf("  %s\n", PerformanceGrade(tester))
-	fmt.Println("  Finished")
+	fmt.Println("--------------------------------------------------")
+
+	fmt.Printf(
+		"> Average  %.3f  %.3f  %.3f  %s\n",
+		tester.Average(connectionTime),
+		tester.Average(timeToFirstByte),
+		tester.Average(totalTime),
+		PerformanceGrade(tester),
+	)
 
 	os.Exit(0)
 }
