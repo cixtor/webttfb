@@ -66,15 +66,15 @@ func (g Grade) worst() float64     { return 2.500 }
 // Paint builds the escape sequence to render the colors.
 func Paint(c Colorizer, value float64) string {
 	if value > c.danger() {
-		return fmt.Sprintf("\033[48;5;009m%.3f\033[0m", value)
+		return fmt.Sprintf("\033[38;5;255;48;5;009m%.3f\033[0m", value)
 	}
 
 	if value > c.warning() {
-		return fmt.Sprintf("\033[48;5;226m%.3f\033[0m", value)
+		return fmt.Sprintf("\033[38;5;008;48;5;226m%.3f\033[0m", value)
 	}
 
 	if value < c.success() {
-		return fmt.Sprintf("\033[48;5;034m%.3f\033[0m", value)
+		return fmt.Sprintf("\033[38;5;255;48;5;034m%.3f\033[0m", value)
 	}
 
 	return fmt.Sprintf("%.3f", value)
@@ -107,38 +107,36 @@ func Colorize(group string, value float64) string {
 // there were too many failures during the testing process the program defaults
 // to the worst grade.
 func PerformanceGrade(t *TTFB) string {
-	var g Grade
-	var grade string
-	var color string
-
-	average := t.Average(totalTime)
-
-	// Assign a better grade only if most tests succeeded.
-	if len(t.Messages) > 4 || average <= 0 {
-		grade = "F"
-		color = "007"
-	} else if average <= g.perfect() {
-		grade = "A+"
-		color = "014"
-	} else if average <= g.excellent() {
-		grade = "A"
-		color = "034"
-	} else if average <= g.good() {
-		grade = "B"
-		color = "226"
-	} else if average <= g.bad() {
-		grade = "C"
-		color = "9"
-	} else if average <= g.awful() {
-		grade = "D"
-		color = "09"
-	} else if average <= g.worst() {
-		grade = "E"
-		color = "009"
-	} else {
-		grade = "~"
-		color = "007"
+	type score struct {
+		Grade string
+		Color string
+		Cond  bool
 	}
 
-	return fmt.Sprintf("Performance: \033[48;5;%sm %s \033[0m", color, grade)
+	var g Grade
+	var level score
+	avg := t.Average(totalTime)
+	scores := []score{
+		{Grade: "F", Color: "38;5;000;48;5;007m", Cond: len(t.Messages) > 4 || avg <= 0},
+		{Grade: "A+", Color: "38;5;255;48;5;038m", Cond: avg <= g.perfect()},
+		{Grade: "A", Color: "38;5;255;48;5;034m", Cond: avg <= g.excellent()},
+		{Grade: "B", Color: "38;5;008;48;5;226m", Cond: avg <= g.good()},
+		{Grade: "C", Color: "38;5;255;48;5;009m", Cond: avg <= g.bad()},
+		{Grade: "D", Color: "38;5;255;48;5;196m", Cond: avg <= g.awful()},
+		{Grade: "E", Color: "38;5;255;48;5;124m", Cond: avg <= g.worst()},
+		{Grade: "~", Color: "38;5;008;48;5;007m", Cond: true},
+	}
+
+	for _, item := range scores {
+		if item.Cond {
+			level = item
+			break
+		}
+	}
+
+	return fmt.Sprintf(
+		"\033[%s Performance: %s \033[0m",
+		level.Color,
+		pad(level.Grade, 3),
+	)
 }
