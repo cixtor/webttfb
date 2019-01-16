@@ -179,6 +179,10 @@ func (t *TTFB) ParseResponse(res io.Reader, unique string) (Result, error) {
 		return t.BasicResult(unique), err
 	}
 
+	if data.Status == 0 {
+		return t.BasicResult(unique), errors.New(unique + ":\x20" + data.Message)
+	}
+
 	return data, nil
 }
 
@@ -307,7 +311,7 @@ func (t *TTFB) Analyze() {
 		done++
 		data := <-ch
 		// Print a loading message until finished.
-		fmt.Printf("\r  Testing %02d/%d ...", done, total)
+		fmt.Printf("\rTesting %02d/%d ...", done, total)
 		t.Results = append(t.Results, data)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
 
 const config string = ".webttfb.cfg"
@@ -48,17 +49,18 @@ func main() {
 
 	flag.Parse()
 
-	tester, err := NewTTFB(*domain, *private)
+	var err error
+	var icon string
+	var tester *TTFB
+	var output []byte
 
-	if err != nil {
+	if tester, err = NewTTFB(*domain, *private); err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	if *local {
-		output, err := tester.LocalTest()
-
-		if err != nil {
+		if output, err = tester.LocalTest(); err != nil {
 			fmt.Println(err)
 			return
 		}
@@ -68,12 +70,11 @@ func main() {
 		return
 	}
 
-	var icon string
-
-	fmt.Println("@ Testing domain [" + tester.Domain + "]")
-	fmt.Println("  Status:  Conn   TTFB   TTL    Location")
-
 	tester.Analyze()
+
+	fmt.Println("    ┌─────────┬───────┬───────┬───────┬────────────────────┐")
+	fmt.Println("    │ Server  │ Conn  │ TTFB  │ TTL   │ Location           │")
+	fmt.Println("┌───┼─────────┼───────┼───────┼───────┼────────────────────┤")
 
 	for _, data := range tester.Report(*sorting) {
 		if data.Status == 1 {
@@ -82,28 +83,42 @@ func main() {
 			icon = "\033[0;31m\u2718\033[0m"
 		}
 
-		fmt.Print(icon)
-		fmt.Printf(" \033[0;2m%s\033[0m", data.Output.ServerID)
-		fmt.Printf("  %s", Colorize("conn", data.Output.ConnectTime))
-		fmt.Printf("  %s", Colorize("ttfb", data.Output.FirstbyteTime))
-		fmt.Printf("  %s", Colorize("ttl", data.Output.TotalTime))
-		fmt.Printf("  %s", data.Output.ServerTitle)
-		fmt.Println()
+		fmt.Printf(
+			"│ %s │ \033[0;2m%s\033[0m │ %s │ %s │ %s │ %s │\n",
+			icon,
+			data.Output.ServerID,
+			Colorize("conn", data.Output.ConnectTime),
+			Colorize("ttfb", data.Output.FirstbyteTime),
+			Colorize("ttl", data.Output.TotalTime),
+			pad(data.Output.ServerTitle, 18),
+		)
 	}
 
-	for _, message := range tester.ErrorMessages() {
-		fmt.Println("\033[0;94m\u2022\033[0m " + message.Error())
-	}
-
-	fmt.Println("--------------------------------------------------")
+	fmt.Println("└───┼─────────┼───────┼───────┼───────┼────────────────────┤")
 
 	fmt.Printf(
-		"> Average  %.3f  %.3f  %.3f  %s\n",
+		"    │ Average │ %.3f │ %.3f │ %.3f │ %s │\n",
 		tester.Average(connectionTime),
 		tester.Average(timeToFirstByte),
 		tester.Average(totalTime),
 		PerformanceGrade(tester),
 	)
 
+	fmt.Println("    └─────────┴───────┴───────┴───────┴────────────────────┘")
+
+	for _, message := range tester.ErrorMessages() {
+		fmt.Println("\033[0;94m\u2022\033[0m " + message.Error())
+	}
+
 	os.Exit(0)
+}
+
+func pad(text string, length int) string {
+	largo := len(text)
+
+	if largo > length {
+		return text[0:length-1] + "…"
+	}
+
+	return text + strings.Repeat("\x20", length-largo)
 }
