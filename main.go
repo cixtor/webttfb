@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -16,6 +17,7 @@ const totalTime string = "ttl"
 var domain = flag.String("d", "example.com", "Domain name to be tested")
 var sorting = flag.String("s", "status", "Criteria to sort the results")
 var private = flag.Bool("p", false, "Hide results from public stats")
+var export = flag.Bool("json", false, "Print the test results as JSON")
 var local = flag.Bool("l", false, "Run the tests with local resources")
 
 func main() {
@@ -70,7 +72,14 @@ func main() {
 		return
 	}
 
-	tester.Analyze()
+	tester.Analyze(!*export)
+
+	if *export {
+		if err = json.NewEncoder(os.Stdout).Encode(tester.Results); err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
 
 	fmt.Println("    ┌─────────┬───────┬───────┬───────┬────────────────────┐")
 	fmt.Println("    │ Server  │ Conn  │ TTFB  │ TTL   │ Location           │")

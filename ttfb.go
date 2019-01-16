@@ -294,7 +294,7 @@ func (t *TTFB) ErrorMessages() []error {
 // server found in the configuration file. Each testing server is supposed to
 // return a JSON-encoded object with information that describes the speed of the
 // website from different locations in the world.
-func (t *TTFB) Analyze() {
+func (t *TTFB) Analyze(progress bool) {
 	var done int
 	total := len(t.Servers)
 	ch := make(chan Result, total)
@@ -310,12 +310,19 @@ func (t *TTFB) Analyze() {
 	for idx := 0; idx < total; idx++ {
 		done++
 		data := <-ch
-		// Print a loading message until finished.
-		fmt.Printf("\rTesting %02d/%d ...", done, total)
+
+		if progress {
+			// Print a loading message until finished.
+			fmt.Printf("\rTesting %02d/%d ...", done, total)
+		}
+
 		t.Results = append(t.Results, data)
 	}
 
-	fmt.Print("\r") /* reset previous line */
+	if progress {
+		// reset previous line.
+		fmt.Print("\r")
+	}
 }
 
 // LocalTest leverages the power of CURL to execute a simple speed test against
