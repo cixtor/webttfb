@@ -54,7 +54,6 @@ func main() {
 	var err error
 	var icon string
 	var tester *TTFB
-	var output []byte
 
 	if tester, err = NewTTFB(*domain, *private); err != nil {
 		fmt.Fprintf(os.Stderr, "NewTTFB %s", err)
@@ -62,19 +61,7 @@ func main() {
 		return
 	}
 
-	if *local {
-		if output, err = tester.LocalTest(); err != nil {
-			fmt.Fprintf(os.Stderr, "tester.LocalTest %s", err)
-			os.Exit(1)
-			return
-		}
-
-		/* convert []byte to string */
-		fmt.Printf("%s\n", output)
-		return
-	}
-
-	tester.Analyze(!*export)
+	tester.Analyze(*local, !*export)
 
 	if *export {
 		if err = json.NewEncoder(os.Stdout).Encode(tester.Results); err != nil {
@@ -101,7 +88,7 @@ func main() {
 			icon,
 			data.Output.ServerID,
 			Colorize("conn", data.Output.ConnectTime),
-			Colorize("ttfb", data.Output.FirstbyteTime),
+			Colorize("ttfb", data.Output.FirstByteTime),
 			Colorize("ttl", data.Output.TotalTime),
 			pad(data.Output.ServerTitle, 18),
 		)

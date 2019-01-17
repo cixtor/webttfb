@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"sort"
+	"time"
 )
 
 // TTFB holds the list of testing servers and the
@@ -43,7 +44,7 @@ type Info struct {
 	Domain          string  `json:"domain"`
 	IP              string  `json:"ip"`
 	ConnectTime     float64 `json:"connect_time,string"`
-	FirstbyteTime   float64 `json:"firstbyte_time,string"`
+	FirstByteTime   float64 `json:"firstbyte_time,string"`
 	TotalTime       float64 `json:"total_time,string"`
 	DomainID        string  `json:"domain_id"`
 	DomainUnique    string  `json:"domain_unique"`
@@ -237,6 +238,90 @@ func (t *TTFB) ServerCheck(ch chan Result, unique string) error {
 	return nil
 }
 
+// LocalCheck leverages the power of CURL to execute a simple speed test against
+// the specified domain name, the test consists of a single HTTP GET request
+// from the current internet connection and reports the connection time, the
+// time to the first byte, the total transmission time among other things.
+//
+// @ref: https://curl.haxx.se/docs/manpage.html
+func (t *TTFB) LocalCheck(ch chan Result, unique string) error {
+	var stats string
+
+	stats += "{"
+	stats += "\"domain\": \"" + t.Domain + "\","
+	stats += "\"http_code\": %{http_code},"
+	stats += "\"connect_time\": %{time_connect},"
+	stats += "\"firstbyte_time\": %{time_starttransfer},"
+	stats += "\"total_time\": %{time_total},"
+	stats += "\"namelookup\": %{time_namelookup},"
+	stats += "\"redirect_time\": %{time_redirect},"
+	stats += "\"num_redirects\": %{num_redirects},"
+	stats += "\"pretransfer\": %{time_pretransfer},"
+	stats += "\"appconnect\": %{time_appconnect},"
+	stats += "\"download_speed\": %{speed_download},"
+	stats += "\"upload_speed\": %{speed_upload}"
+	stats += "}"
+
+	out, err := exec.Command(
+		"/usr/bin/env", "curl", "-L",
+		"-s", "-o", "/dev/null",
+		"-w", stats, *domain,
+	).CombinedOutput()
+
+	if err != nil {
+		ch <- t.BasicResult(unique)
+		return err
+	}
+
+	var v struct {
+		Domain        string  `json:"domain"`
+		Code          int     `json:"http_code"`
+		ConnectTime   float64 `json:"connect_time"`
+		FirstByteTime float64 `json:"firstbyte_time"`
+		TotalTime     float64 `json:"total_time"`
+		Namelookup    float64 `json:"namelookup"`
+		RedirectTime  float64 `json:"redirect_time"`
+		NumRedirects  int     `json:"num_redirects"`
+		PreTransfer   float64 `json:"pretransfer"`
+		AppConnect    float64 `json:"appconnect"`
+		DownloadSpeed float64 `json:"download_speed"`
+		UploadSpeed   float64 `json:"upload_speed"`
+	}
+
+	if err = json.Unmarshal(out, &v); err != nil {
+		ch <- t.BasicResult(unique)
+		return err
+	}
+
+	data := Result{
+		Message:        "Unknown result",
+		Action:         "load_time_tester",
+		Status:         0,
+		LastTestTime:   int(time.Now().Unix()),
+		LocationsCount: 0,
+		TestedServers:  0,
+		IsLastTest:     false,
+		ResetLastTest:  false,
+		DataFromCache:  false,
+		Output: Info{
+			Domain:        t.Domain,
+			ConnectTime:   v.ConnectTime,
+			FirstByteTime: v.FirstByteTime,
+			TotalTime:     v.TotalTime,
+			ServerID:      "localxx",
+			ServerTitle:   fmt.Sprintf("Local %.2f kB/s", v.DownloadSpeed/1000),
+		},
+	}
+
+	if v.Code == 200 {
+		data.Status = 1
+		data.Message = t.Domain + " tested successfully"
+	}
+
+	ch <- data
+	return nil
+}
+
 // Report takes the data generated after the execution of all the HTTP requests
 // and sorts all the values by a specific field in the JSON-encoded object.
 // Currently the program allows sorting by the status of the test, failed tests
@@ -252,7 +337,7 @@ func (t *TTFB) Report(sorting string) []Result {
 		case connectionTime:
 			oldval = data.Output.ConnectTime
 		case timeToFirstByte:
-			oldval = data.Output.FirstbyteTime
+			oldval = data.Output.FirstByteTime
 		case totalTime:
 			oldval = data.Output.TotalTime
 		default:
@@ -294,14 +379,22 @@ func (t *TTFB) ErrorMessages() []error {
 // server found in the configuration file. Each testing server is supposed to
 // return a JSON-encoded object with information that describes the speed of the
 // website from different locations in the world.
-func (t *TTFB) Analyze(progress bool) {
+func (t *TTFB) Analyze(localTest bool, progress bool) {
 	var done int
 	total := len(t.Servers)
 	ch := make(chan Result, total)
 
 	for unique := range t.Servers {
 		go func(ch chan Result, unique string) {
-			if err := t.ServerCheck(ch, unique); err != nil {
+			var err error
+
+			if localTest {
+				err = t.LocalCheck(ch, unique)
+			} else {
+				err = t.ServerCheck(ch, unique)
+			}
+
+			if err != nil {
 				t.Messages = append(t.Messages, err)
 			}
 		}(ch, unique)
@@ -325,41 +418,6 @@ func (t *TTFB) Analyze(progress bool) {
 	}
 }
 
-// LocalTest leverages the power of CURL to execute a simple speed test against
-// the specified domain name, the test consists of a single HTTP GET request
-// from the current internet connection and reports the connection time, the
-// time to the first byte, the total transmission time among other things.
-//
-// @ref: https://curl.haxx.se/docs/manpage.html
-func (t *TTFB) LocalTest() ([]byte, error) {
-	var stats string
-
-	stats += "{"
-	stats += "\"domain\": \"" + t.Domain + "\","
-	stats += "\"http_code\": %{http_code},"
-	stats += "\"connection\": %{time_connect},"
-	stats += "\"time_to_first_byte\": %{time_starttransfer},"
-	stats += "\"total_time\": %{time_total},"
-	stats += "\"namelookup\": %{time_namelookup},"
-	stats += "\"redirect_time\": %{time_redirect},"
-	stats += "\"num_redirects\": %{num_redirects},"
-	stats += "\"pretransfer\": %{time_pretransfer},"
-	stats += "\"appconnect\": %{time_appconnect},"
-	stats += "\"download_speed\": %{speed_download},"
-	stats += "\"upload_speed\": %{speed_upload}"
-	stats += "}"
-
-	out, err := exec.Command("/usr/bin/env",
-		"curl", "-L", "-s", "-o", "/dev/null",
-		"-w", stats, *domain).CombinedOutput()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return out, nil
-}
-
 // Average measures the average responsiveness of each test case ignoring the
 // highest and lowest value to increase the accuracy of the total number. Notice
 // that if the number of successful HTTP requests is lower than 3 it means we
@@ -376,7 +434,7 @@ func (t *TTFB) Average(group string) float64 {
 		}
 
 		if group == timeToFirstByte {
-			values = append(values, data.Output.FirstbyteTime)
+			values = append(values, data.Output.FirstByteTime)
 			continue
 		}
 
