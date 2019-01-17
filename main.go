@@ -57,13 +57,15 @@ func main() {
 	var output []byte
 
 	if tester, err = NewTTFB(*domain, *private); err != nil {
-		fmt.Println(err)
+		fmt.Fprintf(os.Stderr, "NewTTFB %s", err)
+		os.Exit(1)
 		return
 	}
 
 	if *local {
 		if output, err = tester.LocalTest(); err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "tester.LocalTest %s", err)
+			os.Exit(1)
 			return
 		}
 
@@ -76,7 +78,9 @@ func main() {
 
 	if *export {
 		if err = json.NewEncoder(os.Stdout).Encode(tester.Results); err != nil {
-			fmt.Println(err)
+			fmt.Fprintf(os.Stderr, "json.Encode %s", err)
+			os.Exit(1)
+			return
 		}
 		return
 	}
